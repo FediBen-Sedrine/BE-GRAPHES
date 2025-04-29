@@ -1,18 +1,23 @@
 package org.insa.graphs.algorithm.utils;
 
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 
 public class BinarySearchTree<E extends Comparable<E>> implements PriorityQueue<E> {
 
     // Underlying implementation
-    private final SortedSet<E> sortedSet;
+
+    // Elements, sorted by their value
+    private SortedSet<E> sortedSet;
+
+    // Elements, by their hashcode.
+    private HashSet<E> elems;
 
     /**
      * Create a new empty binary search tree.
      */
     public BinarySearchTree() {
         this.sortedSet = new TreeSet<>();
+        this.elems = new HashSet<>();
     }
 
     /**
@@ -22,26 +27,50 @@ public class BinarySearchTree<E extends Comparable<E>> implements PriorityQueue<
      */
     public BinarySearchTree(BinarySearchTree<E> bst) {
         this.sortedSet = new TreeSet<>(bst.sortedSet);
+        this.elems = new HashSet<>(bst.elems);
     }
 
     @Override
     public boolean isEmpty() {
-        return sortedSet.isEmpty();
+        return this.sortedSet.isEmpty();
     }
 
     @Override
     public int size() {
-        return sortedSet.size();
+        return this.sortedSet.size();
     }
 
     @Override
     public void insert(E x) {
-        sortedSet.add(x);
+        this.sortedSet.add(x);
+        this.elems.add(x);
     }
 
     @Override
     public void remove(E x) throws ElementNotFoundException {
-        if (!sortedSet.remove(x)) {
+
+        if (this.elems.contains(x)) {
+            // x is known to be here.
+
+            boolean removed = this.sortedSet.remove(x) ;
+            this.elems.remove(x) ;
+
+            if (!removed) {
+                // The element x was not found in the sorted tree, because its value has changed.
+                // However, we know it is here.
+
+                // This forces the sorted set to be reorganized
+                SortedSet<E> ts = this.sortedSet ;
+                this.sortedSet = new TreeSet<>() ;
+                for (E y : ts) {
+                    this.sortedSet.add(y) ;
+                }
+
+                removed = this.sortedSet.remove(x) ;
+                assert(removed) ;
+            }
+        }
+        else {
             throw new ElementNotFoundException(x);
         }
     }

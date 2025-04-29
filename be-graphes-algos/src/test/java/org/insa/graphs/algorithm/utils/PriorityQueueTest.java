@@ -43,10 +43,16 @@ public abstract class PriorityQueueTest {
     protected static class MutableInteger implements Comparable<MutableInteger> {
 
         // Actual value
-        private int value;
+        private int value ;
+
+        // Unique identifier, used to get a hashcode that does not depend on the value (which may change)
+        private int id ;
+
+        private static int counter = 1000 ;
 
         public MutableInteger(int value) {
-            this.value = value;
+            this.value = value ;
+            this.id = counter++ ;
         }
 
         /**
@@ -67,12 +73,13 @@ public abstract class PriorityQueueTest {
 
         @Override
         public int compareTo(MutableInteger other) {
-            return Integer.compare(this.value, other.value);
+            if (this.id == other.id) return 0 ;
+            else return Integer.compare(this.value, other.value);
         }
 
         @Override
         public String toString() {
-            return Integer.toString(get());
+            return "" + this.get() + " [id:" + this.id + "]";
         }
 
     };
@@ -314,6 +321,7 @@ public abstract class PriorityQueueTest {
             // Update value before removing it. This is what happens when updating a Dijkstra label before updating it.
             mi.set(--min);
             queue.remove(mi);
+            
             assertEquals(parameters.data.length - 1, queue.size());
             queue.insert(mi);
             assertEquals(parameters.data.length, queue.size());
