@@ -27,7 +27,7 @@ public interface ArcInspector {
     public double getCost(Arc arc);
 
     /**
-     * @return The maximum speed for this inspector, or
+     * @return The maximum speed for this inspector in km/h, or
      *         {@link GraphStatistics#NO_MAXIMUM_SPEED} if none is set.
      */
     public int getMaximumSpeed();
