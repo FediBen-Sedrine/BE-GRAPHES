@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.lang.Math;
 
 import org.insa.graphs.algorithm.shortestpath.Label;
 import org.insa.graphs.algorithm.shortestpath.ShortestPathData;
@@ -29,10 +30,38 @@ public class DijkstraAlgorithm extends ShortestPathAlgorithm {
 
         // TODO: implement the Dijkstra algorithm
 
-        Node origin = super.getInputData().getOrigin();
+        Node origine = super.getInputData().getOrigin();
         Node destination = super.getInputData().getDestination();
-        Label labelOrigine ; 
-        Label labelDestination ; 
+        
+        Label origineLabel = new Label(origine, false, 0);
+        Label destinationLabel = new Label(destination, false, -1);
+        Label currentLabel = new Label(origine, false, 0);
+
+        ArrayList<Label> tableau_de_suivi = new ArrayList<>();
+
+        while (currentLabel != destinationLabel) {
+            for (Arc a : currentLabel.get_sommet_courant().getSuccessors()) {
+                // Label b = new Label(a.getDestination(), false, currentLabel.get_cout_realise() + a.getLength(), a);
+                int indexA = -1;
+                for (int i = 0; i < tableau_de_suivi.size(); i++) {
+                    if (tableau_de_suivi.get(i).get_sommet_courant() == a.getDestination()) {
+                        indexA = i;
+                        break;
+                    }
+                }
+                if (indexA != -1) { // node already reached
+                    // update the new potential shortest path for this node
+                    float new_cost = Math.min(tableau_de_suivi.get(indexA).get_cout_realise(), 
+                            currentLabel.get_cout_realise() + a.getLength());
+                    tableau_de_suivi.get(indexA).set_cout_realise(new_cost);
+                } else {
+                    tableau_de_suivi.add(new Label(a.getDestination(), false, currentLabel.get_cout_realise() + a.getLength(), a))
+                }
+            }
+            //find min
+        }
+        Label labelOrigine; 
+        Label labelDestination; 
 
         Label current ;
         labelOrigine = new Label(origin, false, 0, null);

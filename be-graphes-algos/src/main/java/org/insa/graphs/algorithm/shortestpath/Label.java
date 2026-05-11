@@ -4,12 +4,12 @@ import org.insa.graphs.model.Arc;
 import org.insa.graphs.model.Node;
 
 public class Label {
-    Node sommet_courant;    // sommet associé à ce label (sommet ou numéro de sommet)
-    boolean marque;         // booléen, vrai lorsque le coût min de ce sommet est 
+    private Node sommet_courant;    // sommet associé à ce label (sommet ou numéro de sommet)
+    private boolean marque;         // booléen, vrai lorsque le coût min de ce sommet est 
                             // définitivement connu par l'algorithme
-    float cout_realise;     // valeur courante du plus court chemin depuis l'origine vers 
+    private float cout_realise;     // valeur courante du plus court chemin depuis l'origine vers 
                             // le sommet
-    Arc pere;               // sommet précédent sur le chemin correspondant au plus court 
+    private Arc pere;               // sommet précédent sur le chemin correspondant au plus court 
                             // chemin courant. Afin de reconstruire le chemin à la fin de 
                             // l'algorithme, mieux vaut stocker l'arc plutôt que seulement 
                             // le père.
@@ -35,5 +35,11 @@ public class Label {
         this.marque = marque;
         this.cout_realise = cout_realise;
         this.pere = pere;
+    }
+
+    public Label(Node sommet_courant, boolean marque, float cout_realise) {
+        this.sommet_courant = sommet_courant;
+        this.marque = marque;
+        this.cout_realise = cout_realise;
     }
 }
