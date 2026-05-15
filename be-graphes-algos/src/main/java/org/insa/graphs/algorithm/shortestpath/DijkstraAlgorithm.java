@@ -1,16 +1,21 @@
 package org.insa.graphs.algorithm.shortestpath;
 
 import org.insa.graphs.model.Arc;
+import org.insa.graphs.model.Graph;
 import org.insa.graphs.model.Node;
+import org.insa.graphs.model.Path;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.lang.Math;
 
+import org.insa.graphs.algorithm.AbstractSolution;
 import org.insa.graphs.algorithm.shortestpath.Label;
 import org.insa.graphs.algorithm.shortestpath.ShortestPathData;
+import org.insa.graphs.algorithm.utils.BinaryHeap;
 
 public class DijkstraAlgorithm extends ShortestPathAlgorithm {
 
@@ -30,52 +35,83 @@ public class DijkstraAlgorithm extends ShortestPathAlgorithm {
 
         // TODO: implement the Dijkstra algorithm
 
-        Node origine = super.getInputData().getOrigin();
-        Node destination = super.getInputData().getDestination();
+    Map<Node, Label> labels = new HashMap<>();
+    BinaryHeap<Label> priorityQueue = new BinaryHeap<>();
+
+    // Initialisation de la source
+    Label source = new Label(data.getOrigin(), false, 0, null);
+    labels.put(data.getOrigin(), source);
+    priorityQueue.insert(source); 
+
+    while (!priorityQueue.isEmpty()) {
+
+        Label currentLabel = priorityQueue.deleteMin();
+        Node currentNode = currentLabel.get_sommet_courant();
         
-        Label origineLabel = new Label(origine, false, 0);
-        Label destinationLabel = new Label(destination, false, -1);
-        Label currentLabel = new Label(origine, false, 0);
+        if (currentLabel.get_marque()) { 
+            continue;
+        }
+        currentLabel.setMarque(true);
 
-        ArrayList<Label> tableau_de_suivi = new ArrayList<>();
+        // permet de skip les doublons (en cas de mise a jour du cout d'un noeud on a plusieurs fois
+        // la référence à un même label. la première à sauter et celle de cout le + faible, 
+        // quand on croise l'une des autres on passe à la boucle suivante
 
-        while (currentLabel != destinationLabel) {
-            for (Arc a : currentLabel.get_sommet_courant().getSuccessors()) {
-                // Label b = new Label(a.getDestination(), false, currentLabel.get_cout_realise() + a.getLength(), a);
-                int indexA = -1;
-                for (int i = 0; i < tableau_de_suivi.size(); i++) {
-                    if (tableau_de_suivi.get(i).get_sommet_courant() == a.getDestination()) {
-                        indexA = i;
-                        break;
-                    }
-                }
-                if (indexA != -1) { // node already reached
-                    // update the new potential shortest path for this node
-                    float new_cost = Math.min(tableau_de_suivi.get(indexA).get_cout_realise(), 
-                            currentLabel.get_cout_realise() + a.getLength());
-                    tableau_de_suivi.get(indexA).set_cout_realise(new_cost);
-                } else {
-                    tableau_de_suivi.add(new Label(a.getDestination(), false, currentLabel.get_cout_realise() + a.getLength(), a))
+        if (currentNode.equals(data.getDestination())) { // Fin si on a atteint la destination
+            break;
+        }
+
+        for (Arc arc : currentNode.getSuccessors()) {
+            if (!data.isAllowed(arc)) continue; // vérifie si le mode de transport est autorisé
+
+            Node successor = arc.getDestination();
+            Label destLabel = labels.get(successor);
+
+            if (destLabel == null) {
+                destLabel = new Label(successor, false, Float.POSITIVE_INFINITY, null);
+                labels.put(successor, destLabel);
+            }
+
+            if (!destLabel.get_marque()) {
+                float oldDistance = destLabel.get_cout_realise();
+                float newDistance = currentLabel.get_cout_realise() + (float)data.getCost(arc);
+
+                if (newDistance < oldDistance) {
+                    destLabel.setCoutRealise(newDistance);
+                    destLabel.setPere(arc);
+                    priorityQueue.insert(destLabel);
                 }
             }
-            //find min
         }
-        Label labelOrigine; 
-        Label labelDestination; 
+    }
 
-        Label current ;
-        labelOrigine = new Label(origin, false, 0, null);
-        current = labelOrigine ;  
+    // On récupère le label destination 
+    Label destLabel = labels.get(data.getDestination());
 
-        labelDestination = new Label(destination, false, -1, null);
-
-        List<Label> labels = new ArrayList<>();
-
-        while (labelDestination.marque == false) {
-            
+    if (destLabel == null || destLabel.get_pere() == null) {
+        // Cas 1 : pas de chemin
+        solution = new ShortestPathSolution(data, AbstractSolution.Status.INFEASIBLE);
+    } 
+    else {
+        // Cas 2 : on a trouvé un chemin, on le reconstruit
+        ArrayList<Arc> arcs = new ArrayList<>();
+        Arc currentArc = destLabel.get_pere();
+        
+        while (currentArc != null) {
+            arcs.add(currentArc);
+            // On remonte au label du sommet d'origine de l'arc
+            Label prevLabel = labels.get(currentArc.getOrigin());
+            currentArc = prevLabel.get_pere();
         }
+        
+        // Le chemin est construit à l'envers, il faut le retourner
+        Collections.reverse(arcs);
 
-        // when the algorithm terminates, return the solution that has been found
+        Graph graph = data.getGraph();
+        Path finalPath = new Path(graph, arcs);
+        solution = new ShortestPathSolution(data, AbstractSolution.Status.OPTIMAL, finalPath);
+    }
+
         return solution;
     }
 

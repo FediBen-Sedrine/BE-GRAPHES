@@ -3,7 +3,7 @@ package org.insa.graphs.algorithm.shortestpath;
 import org.insa.graphs.model.Arc;
 import org.insa.graphs.model.Node;
 
-public class Label {
+public class Label implements Comparable<Label> {
     private Node sommet_courant;    // sommet associé à ce label (sommet ou numéro de sommet)
     private boolean marque;         // booléen, vrai lorsque le coût min de ce sommet est 
                             // définitivement connu par l'algorithme
@@ -14,21 +14,14 @@ public class Label {
                             // l'algorithme, mieux vaut stocker l'arc plutôt que seulement 
                             // le père.
 
-    Node get_sommet_courant() {
-        return this.sommet_courant;
-    }
+    public Node get_sommet_courant() { return this.sommet_courant; }
+    public boolean get_marque() { return this.marque; }
+    public float get_cout_realise () { return this.cout_realise; }
+    public Arc get_pere() { return this.pere; }
 
-    boolean get_marque() {
-        return this.marque;
-    }
-
-    float get_cout_realise () {
-        return this.cout_realise;
-    }
-
-    Arc pere() {
-        return this.pere;
-    }
+    public void setCoutRealise(float cout) { this.cout_realise = cout; }
+    public void setMarque(boolean marque) { this.marque = marque; }
+    public void setPere(Arc pere) { this.pere = pere; }
 
     public Label(Node sommet_courant, boolean marque, float cout_realise, Arc pere) {
         this.sommet_courant = sommet_courant;
@@ -41,5 +34,16 @@ public class Label {
         this.sommet_courant = sommet_courant;
         this.marque = marque;
         this.cout_realise = cout_realise;
+    }
+
+    public Label(Node sommet_courant, boolean marque) {
+        this.sommet_courant = sommet_courant;
+        this.marque = marque;
+        this.cout_realise = Float.POSITIVE_INFINITY;
+    }
+
+    @Override
+    public int compareTo(Label o) {
+        return Float.compare(this.cout_realise, o.cout_realise);
     }
 }
