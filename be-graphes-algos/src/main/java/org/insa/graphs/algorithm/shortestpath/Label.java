@@ -2,14 +2,15 @@ package org.insa.graphs.algorithm.shortestpath;
 
 import org.insa.graphs.model.Arc;
 import org.insa.graphs.model.Node;
+import org.insa.graphs.model.Point;
 
 public class Label implements Comparable<Label> {
-    private Node sommet_courant;    // sommet associé à ce label (sommet ou numéro de sommet)
-    private boolean marque;         // booléen, vrai lorsque le coût min de ce sommet est 
+    protected Node sommet_courant;    // sommet associé à ce label (sommet ou numéro de sommet)
+    protected boolean marque;         // booléen, vrai lorsque le coût min de ce sommet est 
                             // définitivement connu par l'algorithme
-    private float cout_realise;     // valeur courante du plus court chemin depuis l'origine vers 
+    protected float cout_realise;     // valeur courante du plus court chemin depuis l'origine vers 
                             // le sommet
-    private Arc pere;               // sommet précédent sur le chemin correspondant au plus court 
+    protected Arc pere;               // sommet précédent sur le chemin correspondant au plus court 
                             // chemin courant. Afin de reconstruire le chemin à la fin de 
                             // l'algorithme, mieux vaut stocker l'arc plutôt que seulement 
                             // le père.
@@ -44,6 +45,10 @@ public class Label implements Comparable<Label> {
 
     @Override
     public int compareTo(Label o) {
-        return Float.compare(this.cout_realise, o.cout_realise);
+        return Float.compare(this.getTotalCost(this), this.getTotalCost(o));
+    }
+
+    public float getTotalCost(Label o){
+        return o.cout_realise ;
     }
 }
