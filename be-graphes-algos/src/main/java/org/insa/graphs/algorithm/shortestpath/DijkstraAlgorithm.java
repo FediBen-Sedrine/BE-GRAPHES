@@ -42,16 +42,19 @@ public class DijkstraAlgorithm extends ShortestPathAlgorithm {
     Label source = new Label(data.getOrigin(), false, 0, null);
     labels.put(data.getOrigin(), source);
     priorityQueue.insert(source); 
+    notifyOriginProcessed(source.get_sommet_courant());
 
     while (!priorityQueue.isEmpty()) {
 
         Label currentLabel = priorityQueue.deleteMin();
         Node currentNode = currentLabel.get_sommet_courant();
-        
+        notifyNodeReached(currentNode);
+
         if (currentLabel.get_marque()) { 
             continue;
         }
         currentLabel.setMarque(true);
+        notifyNodeMarked(currentNode);
 
         // permet de skip les doublons (en cas de mise a jour du cout d'un noeud on a plusieurs fois
         // la référence à un même label. la première à sauter et celle de cout le + faible, 
@@ -111,7 +114,7 @@ public class DijkstraAlgorithm extends ShortestPathAlgorithm {
         Path finalPath = new Path(graph, arcs);
         solution = new ShortestPathSolution(data, AbstractSolution.Status.OPTIMAL, finalPath);
     }
-
+        notifyDestinationReached(destLabel.get_sommet_courant());
         return solution;
     }
 
