@@ -6,24 +6,44 @@ import org.insa.graphs.model.Point;
 
 public class LabelStar extends Label {
 
-    float coutTotal ;
+    float coutSupp ;
 
     public LabelStar(Node sommet_courant, boolean marque, float cout_realise, Arc pere, LabelStar dest){
         super(sommet_courant, marque, cout_realise, pere);
-        this.coutTotal = (float) cout_realise + (float) Point.distance(sommet_courant.getPoint(), dest.sommet_courant.getPoint());
+        this.cout_realise = cout_realise ;
+        if (dest != null){
+            this.coutSupp = (float) Point.distance(sommet_courant.getPoint(), dest.sommet_courant.getPoint());
+        }
+        else {
+            this.coutSupp = 0;
+        }
+        
     }
 
     public LabelStar(Node sommet_courant, boolean marque, float cout_realise, LabelStar dest){
         super(sommet_courant, marque, cout_realise);
-        this.coutTotal = (float) cout_realise + (float) Point.distance(sommet_courant.getPoint(), dest.sommet_courant.getPoint());
-    }
+        this.cout_realise = cout_realise ;
+        if (dest != null){
+            this.coutSupp = (float) Point.distance(sommet_courant.getPoint(), dest.sommet_courant.getPoint());
+        }
+        else {
+            this.coutSupp = 0;
+        }    }
 
     public LabelStar(Node sommet_courant, boolean marque, LabelStar dest){
         super(sommet_courant, marque);
-        this.coutTotal = (float) cout_realise + (float) Point.distance(sommet_courant.getPoint(), dest.sommet_courant.getPoint());
+        this.cout_realise = Float.POSITIVE_INFINITY;
+        if (dest != null){
+            this.coutSupp = (float) Point.distance(sommet_courant.getPoint(), dest.sommet_courant.getPoint());
+        }
+        else {
+            this.coutSupp = 0;
+        }
     }
 
-    public float getTotalCost(LabelStar o){
-        return this.coutTotal;
+    @Override
+
+    public float getTotalCost(){
+        return this.coutSupp + this.cout_realise;
     }
 }

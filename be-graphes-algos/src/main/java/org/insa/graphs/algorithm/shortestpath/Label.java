@@ -45,10 +45,10 @@ public class Label implements Comparable<Label> {
 
     @Override
     public int compareTo(Label o) {
-        return Float.compare(this.getTotalCost(this), this.getTotalCost(o));
+        return Float.compare(this.getTotalCost(), o.getTotalCost());
     }
 
-    public float getTotalCost(Label o){
-        return o.cout_realise ;
+    public float getTotalCost(){
+        return this.cout_realise ;
     }
 }

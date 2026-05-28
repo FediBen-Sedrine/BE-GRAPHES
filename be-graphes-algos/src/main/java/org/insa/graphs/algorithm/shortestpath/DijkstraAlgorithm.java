@@ -113,8 +113,9 @@ public class DijkstraAlgorithm extends ShortestPathAlgorithm {
         Graph graph = data.getGraph();
         Path finalPath = new Path(graph, arcs);
         solution = new ShortestPathSolution(data, AbstractSolution.Status.OPTIMAL, finalPath);
-    }
         notifyDestinationReached(destLabel.get_sommet_courant());
+    }
+        
         return solution;
     }
 
