@@ -23,6 +23,10 @@ public class DijkstraAlgorithm extends ShortestPathAlgorithm {
         super(data);
     }
 
+    protected Label createLabel(Node node, ShortestPathData data) {
+        return new Label(node, false, Float.POSITIVE_INFINITY, null);
+    }
+
     @Override
     protected ShortestPathSolution doRun() {
 
@@ -33,28 +37,34 @@ public class DijkstraAlgorithm extends ShortestPathAlgorithm {
         // variable that will contain the solution of the shortest path problem
         ShortestPathSolution solution = null;
 
-        // TODO: implement the Dijkstra algorithm
+        Map<Node, Label> labels = new HashMap<>();
+        BinaryHeap<Label> priorityQueue = new BinaryHeap<>();
 
-    Map<Node, Label> labels = new HashMap<>();
-    BinaryHeap<Label> priorityQueue = new BinaryHeap<>();
+        // Initialisation de la source
+        // Utilisation de la méthode modulaire pour la source
+        Label source = createLabel(data.getOrigin(), data);
+        source.setCoutRealise(0); // On force le coût à 0 pour l'origine
 
-    // Initialisation de la source
-    Label source = new Label(data.getOrigin(), false, 0, null);
-    labels.put(data.getOrigin(), source);
-    priorityQueue.insert(source); 
-    notifyOriginProcessed(source.get_sommet_courant());
-
-    while (!priorityQueue.isEmpty()) {
-
-        Label currentLabel = priorityQueue.deleteMin();
-        Node currentNode = currentLabel.get_sommet_courant();
-        notifyNodeReached(currentNode);
-
-        if (currentLabel.get_marque()) { 
-            continue;
+        labels.put(data.getOrigin(), source);
+        priorityQueue.insert(source);
+        notifyOriginProcessed(source.get_sommet_courant());
+        if (data.getOrigin().equals(data.getDestination())) {
+            solution = new ShortestPathSolution(data, AbstractSolution.Status.OPTIMAL, new Path(data.getGraph(), data.getOrigin()));
+            notifyDestinationReached(source.get_sommet_courant());
+            return solution;
         }
-        currentLabel.setMarque(true);
-        notifyNodeMarked(currentNode);
+
+        while (!priorityQueue.isEmpty()) {
+
+            Label currentLabel = priorityQueue.deleteMin();
+            Node currentNode = currentLabel.get_sommet_courant();
+            notifyNodeReached(currentNode);
+
+            if (currentLabel.get_marque()) { 
+                continue;
+            }
+            currentLabel.setMarque(true);
+            notifyNodeMarked(currentNode);
 
         // permet de skip les doublons (en cas de mise a jour du cout d'un noeud on a plusieurs fois
         // la référence à un même label. la première à sauter et celle de cout le + faible, 
@@ -113,8 +123,9 @@ public class DijkstraAlgorithm extends ShortestPathAlgorithm {
         Graph graph = data.getGraph();
         Path finalPath = new Path(graph, arcs);
         solution = new ShortestPathSolution(data, AbstractSolution.Status.OPTIMAL, finalPath);
-    }
         notifyDestinationReached(destLabel.get_sommet_courant());
+    }
+        
         return solution;
     }
 
