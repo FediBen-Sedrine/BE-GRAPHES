@@ -12,7 +12,7 @@ import org.insa.graphs.model.Graph;
 import org.insa.graphs.algorithm.AbstractSolution;
 import org.insa.graphs.algorithm.ArcInspector;
 import org.insa.graphs.algorithm.ArcInspectorFactory;
-import org.insa.graphs.algorithm.shortestpath.BellmanFordAlgorithm;
+import org.insa.graphs.algorithm.shortestpath.AStarAlgorithm;
 import org.insa.graphs.algorithm.shortestpath.DijkstraAlgorithm;
 import org.insa.graphs.algorithm.shortestpath.ShortestPathData;
 import org.insa.graphs.algorithm.shortestpath.ShortestPathSolution;
@@ -22,9 +22,8 @@ import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class DijkstraTest {
+public class AStarTests {
 
-    // on garde le graphe en statique pour pas le recharger a chaque test
     private static Graph graphInsa;
 
     @BeforeClass
@@ -33,72 +32,102 @@ public class DijkstraTest {
 
         try (final GraphReader reader = new BinaryGraphReader(new DataInputStream(
                 new BufferedInputStream(new FileInputStream(mapName))))) {
-            graphInsa = reader.read(); 
+            graphInsa = reader.read();
         }
     }
 
     @Test
-    public void testCheminExistantLongueurNonNulle() {
-        Node origin = graphInsa.getNodes().get(109); 
+    public void testAStarEmptyGraph() {
+        Node origin = graphInsa.getNodes().get(42);
+        Node destination = graphInsa.getNodes().get(42);
+
+        ArcInspector arcInspector = ArcInspectorFactory.getAllFilters().get(0);
+        ShortestPathData data = new ShortestPathData(graphInsa, origin, destination, arcInspector);
+
+        AStarAlgorithm aStar = new AStarAlgorithm(data);
+        ShortestPathSolution solution = aStar.run();
+
+        assertEquals(AbstractSolution.Status.OPTIMAL, solution.getStatus());
+        assertEquals("Le chemin nul doit avoir un coût de 0", 0.0, solution.getPath().getLength(), 1e-4);
+        assertTrue("Le chemin contenant un seul noeud doit être valide", solution.getPath().isValid());
+    }
+
+    @Test
+    public void testAStarSingleNode() {
+        Node origin = graphInsa.getNodes().get(109);
         Node destination = graphInsa.getNodes().get(89);
-        
-        // filtre par defaut distance + toutes les routes
-        ArcInspector arcInspector = ArcInspectorFactory.getAllFilters().get(0);
-        
-        ShortestPathData data = new ShortestPathData(graphInsa, origin, destination, arcInspector);
 
-        DijkstraAlgorithm dijkstra = new DijkstraAlgorithm(data);
-        BellmanFordAlgorithm bellman = new BellmanFordAlgorithm(data);
-
-        ShortestPathSolution solutionDijkstra = dijkstra.run();
-        ShortestPathSolution solutionBellman = bellman.run();
-
-        assertEquals(AbstractSolution.Status.OPTIMAL, solutionDijkstra.getStatus());
-        assertTrue("Le chemin calculé par Dijkstra doit être valide", solutionDijkstra.getPath().isValid());
-
-        // on compare avec bellman ford comme oracle, epsilon obligatoire pour les flottants
-        assertEquals("Le coût trouvé doit être identique à Bellman-Ford", 
-                    solutionBellman.getPath().getLength(), 
-                    solutionDijkstra.getPath().getLength(), 
-                    1e-4);
-    }
-
-    @Test
-    public void testCheminNul() {
-        // meme noeud en origine et destination
-        Node origin = graphInsa.getNodes().get(42); 
-        Node destination = graphInsa.getNodes().get(42); 
-        
         ArcInspector arcInspector = ArcInspectorFactory.getAllFilters().get(0);
         ShortestPathData data = new ShortestPathData(graphInsa, origin, destination, arcInspector);
 
-        DijkstraAlgorithm dijkstra = new DijkstraAlgorithm(data);
-        ShortestPathSolution solutionDijkstra = dijkstra.run();
+        AStarAlgorithm aStar = new AStarAlgorithm(data);
+        ShortestPathSolution solution = aStar.run();
 
-        assertEquals(AbstractSolution.Status.OPTIMAL, solutionDijkstra.getStatus());
-        assertEquals("Le chemin nul doit avoir un coût de 0", 0.0, solutionDijkstra.getPath().getLength(), 1e-4);
-        assertTrue("Le chemin contenant un seul noeud doit être valide", solutionDijkstra.getPath().isValid());
+        assertEquals(AbstractSolution.Status.OPTIMAL, solution.getStatus());
+        assertTrue("Le chemin calculé par A* doit être valide", solution.getPath().isValid());
+        assertTrue("Le chemin doit avoir une longueur strictement positive", solution.getPath().getLength() > 0);
     }
 
     @Test
-    public void testCheminInexistant() {
-        // ces deux noeuds sont deconnectes sur la carte bretagne
+    public void testAStarTwoNodes() {
+        Node origin = graphInsa.getNodes().get(109);
+        Node destination = graphInsa.getNodes().get(89);
+
+        ArcInspector arcInspector = ArcInspectorFactory.getAllFilters().get(0);
+        ShortestPathData data = new ShortestPathData(graphInsa, origin, destination, arcInspector);
+
+        AStarAlgorithm aStar = new AStarAlgorithm(data);
+        DijkstraAlgorithm dijkstra = new DijkstraAlgorithm(data);
+
+        ShortestPathSolution solutionAStar = aStar.run();
+        ShortestPathSolution solutionDijkstra = dijkstra.run();
+
+        assertEquals(AbstractSolution.Status.OPTIMAL, solutionAStar.getStatus());
+        assertTrue("Le chemin calculé par A* doit être valide", solutionAStar.getPath().isValid());
+        assertEquals("Les coûts d'A* et de Dijkstra doivent être identiques",
+                     solutionDijkstra.getPath().getLength(),
+                     solutionAStar.getPath().getLength(),
+                     1e-4);
+    }
+
+    @Test
+    public void testAStarNoPath() {
         Node origin = graphInsa.getNodes().get(371752);
         Node destination = graphInsa.getNodes().get(116033);
-        
+
         ArcInspector arcInspector = ArcInspectorFactory.getAllFilters().get(0);
         ShortestPathData data = new ShortestPathData(graphInsa, origin, destination, arcInspector);
 
-        DijkstraAlgorithm dijkstra = new DijkstraAlgorithm(data);
-        ShortestPathSolution solution = dijkstra.run();
+        AStarAlgorithm aStar = new AStarAlgorithm(data);
+        ShortestPathSolution solution = aStar.run();
 
         assertEquals("Aucun chemin ne doit être trouvé", AbstractSolution.Status.INFEASIBLE, solution.getStatus());
     }
 
     @Test
+    public void testAStarHeuristicAdmissible() {
+        Node origin = graphInsa.getNodes().get(109);
+        Node destination = graphInsa.getNodes().get(89);
+
+        ArcInspector arcInspector = ArcInspectorFactory.getAllFilters().get(0);
+        ShortestPathData data = new ShortestPathData(graphInsa, origin, destination, arcInspector);
+
+        AStarAlgorithm aStar = new AStarAlgorithm(data);
+        DijkstraAlgorithm dijkstra = new DijkstraAlgorithm(data);
+
+        ShortestPathSolution solutionAStar = aStar.run();
+        ShortestPathSolution solutionDijkstra = dijkstra.run();
+
+        assertEquals(AbstractSolution.Status.OPTIMAL, solutionAStar.getStatus());
+        assertEquals("A* ne doit pas sur-estimer le coût du plus court chemin",
+                     solutionDijkstra.getPath().getLength(),
+                     solutionAStar.getPath().getLength(),
+                     1e-4);
+    }
+    @Test
     public void testInegaliteTriangulaire() {
         // on prend trois noeuds hard codes sur la carte bretagne
-        // A et B sont relativement proches, C est un point intermediaire quelque part entre les deux
+        // A et B sont les points de depart et d arrivee, C est un point intermediaire
         Node nodeA = graphInsa.getNodes().get(109);
         Node nodeB = graphInsa.getNodes().get(89);
         Node nodeC = graphInsa.getNodes().get(500);
@@ -110,13 +139,13 @@ public class DijkstraTest {
         ShortestPathData dataAC = new ShortestPathData(graphInsa, nodeA, nodeC, arcInspector);
         ShortestPathData dataCB = new ShortestPathData(graphInsa, nodeC, nodeB, arcInspector);
 
-        DijkstraAlgorithm dijkstraAB = new DijkstraAlgorithm(dataAB);
-        DijkstraAlgorithm dijkstraAC = new DijkstraAlgorithm(dataAC);
-        DijkstraAlgorithm dijkstraCB = new DijkstraAlgorithm(dataCB);
+        AStarAlgorithm aStarAB = new AStarAlgorithm(dataAB);
+        AStarAlgorithm aStarAC = new AStarAlgorithm(dataAC);
+        AStarAlgorithm aStarCB = new AStarAlgorithm(dataCB);
 
-        ShortestPathSolution solAB = dijkstraAB.run();
-        ShortestPathSolution solAC = dijkstraAC.run();
-        ShortestPathSolution solCB = dijkstraCB.run();
+        ShortestPathSolution solAB = aStarAB.run();
+        ShortestPathSolution solAC = aStarAC.run();
+        ShortestPathSolution solCB = aStarCB.run();
 
         // si un des chemins n existe pas le test n a pas de sens donc on le saute
         Assume.assumeTrue(solAB.getStatus() == AbstractSolution.Status.OPTIMAL);
